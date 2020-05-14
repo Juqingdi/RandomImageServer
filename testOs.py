@@ -9,4 +9,4 @@ for file in dirs:
 	print(file.name, file.is_file())
 	# print()
 
-print(random.randint(0,10))
+print(random.randint(0,0))

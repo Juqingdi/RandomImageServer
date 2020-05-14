@@ -20,7 +20,7 @@ IP = "127.0.0.1" #accessible to only this device
 PORT = 8001
 
 images = []
-unvisited_image = []
+unvisited_images = []
 
 # MIME-TYPE
 mimedic = [
@@ -47,15 +47,18 @@ class myHTTPServer_RequestHandler(BaseHTTPRequestHandler):
         # print(filepath)
         
         if filepath == '/randomPic':
-            print(unvisited_image)
-            randomIndex = random.randint(0, len(unvisited_image) - 1)
-            filepath = unvisited_image[randomIndex]
-            unvisited_image.pop(randomIndex)
-            if len(unvisited_image) == 0:
+            print(unvisited_images)
+            if len(images) == 0:
+                self.send_error(404, 'No Images Found')
+                return
+            randomIndex = random.randint(0, len(unvisited_images) - 1)
+            filepath = unvisited_images[randomIndex]
+            unvisited_images.pop(randomIndex)
+            if len(unvisited_images) == 0:
                 print('add images')
                 for image in images:
-                    unvisited_image.append(image)
-                print('after add', unvisited_image)
+                    unvisited_images.append(image)
+                print('after add', unvisited_images)
 
         # print('path', path)
         filename, fileext = path.splitext(filepath)
@@ -85,24 +88,25 @@ class FileEventHandler(FileSystemEventHandler):
             print("image renamed from {0} to {1}".format(event.src_path,event.dest_path))
             images.remove(event.src_path)
             images.append(event.dest_path)
-            if event.src_path in unvisited_image:
-                unvisited_image.remove(event.src_path)
-                unvisited_image.append(event.dest_path)
-            print(images, unvisited_image)
+            if event.src_path in unvisited_images:
+                unvisited_images.remove(event.src_path)
+                unvisited_images.append(event.dest_path)
+            print(images, unvisited_images)
 
     def on_created(self, event):
         if not(event.is_directory) and is_image(event.src_path):
             print("image created:{0}".format(event.src_path))
             images.append(event.src_path)
-            print(images, unvisited_image)
+            unvisited_images.append(event.src_path)
+            print(images, unvisited_images)
 
     def on_deleted(self, event):
         if not(event.is_directory) and is_image(event.src_path):
             print("image deleted:{0}".format(event.src_path))
             images.remove(event.src_path)
-            if event.src_path in unvisited_image:
-                unvisited_image.remove(event.src_path)
-            print(images, unvisited_image)
+            if event.src_path in unvisited_images:
+                unvisited_images.remove(event.src_path)
+            print(images, unvisited_images)
 
     def on_modified(self, event):
         pass
@@ -119,7 +123,7 @@ def scan_image():
         if file.is_file():
             if is_image(file.path):
                 images.append(file.path)
-                unvisited_image.append(file.path)
+                unvisited_images.append(file.path)
     print(images)
 
 def watch_image():
