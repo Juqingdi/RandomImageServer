@@ -1,18 +1,18 @@
 #!/usr/bin/env python
 #--coding:utf-8--
 
-import os, sys, random
-import argparse
-import ipaddress
-import time
+# import time
 
-
+from sys import exit
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from os import path
+from ipaddress import ip_address
+from os import path, scandir
+from argparse import ArgumentParser
+from random import randint
 from urllib.parse import urlparse
 from watchdog.observers import Observer
 from watchdog.events import *
- 
+
 curdir = path.dirname(path.realpath(__file__))
 sep = '/'
 
@@ -24,18 +24,18 @@ unvisited_images = []
 
 # MIME-TYPE
 mimedic = [
-                        # ('.html', 'text/html'),
-                        # ('.htm', 'text/html'),
-                        # ('.js', 'application/javascript'),
-                        # ('.css', 'text/css'),
-                        # ('.json', 'application/json'),
-                        ('.png', 'image/png'),
-                        ('.jpg', 'image/jpeg'),
-                        ('.jpeg', 'image/jpeg'),
-                        ('.gif', 'image/gif'),
-                        # ('.txt', 'text/plain'),
-                        # ('.avi', 'video/x-msvideo'),
-                    ]
+    # ('.html', 'text/html'),
+    # ('.htm', 'text/html'),
+    # ('.js', 'application/javascript'),
+    # ('.css', 'text/css'),
+    # ('.json', 'application/json'),
+    ('.png', 'image/png'),
+    ('.jpg', 'image/jpeg'),
+    ('.jpeg', 'image/jpeg'),
+    ('.gif', 'image/gif'),
+    # ('.txt', 'text/plain'),
+    # ('.avi', 'video/x-msvideo'),
+]
 
 
 class myHTTPServer_RequestHandler(BaseHTTPRequestHandler):
@@ -51,14 +51,14 @@ class myHTTPServer_RequestHandler(BaseHTTPRequestHandler):
             if len(images) == 0:
                 self.send_error(404, 'No Images Found')
                 return
-            randomIndex = random.randint(0, len(unvisited_images) - 1)
+            randomIndex = randint(0, len(unvisited_images) - 1)
             filepath = unvisited_images[randomIndex]
             unvisited_images.pop(randomIndex)
             if len(unvisited_images) == 0:
-                print('add images')
+                print('readd unvisited_images')
                 for image in images:
                     unvisited_images.append(image)
-                print('after add', unvisited_images)
+                print('after readd', unvisited_images)
 
         # print('path', path)
         filename, fileext = path.splitext(filepath)
@@ -67,7 +67,7 @@ class myHTTPServer_RequestHandler(BaseHTTPRequestHandler):
             if e[0] == fileext:
                 mimetype = e[1]
                 sendReply = True
- 
+
         if sendReply == True:
             try:
                 with open(path.realpath(curdir + sep + filepath),'rb') as f:
@@ -78,6 +78,8 @@ class myHTTPServer_RequestHandler(BaseHTTPRequestHandler):
                     self.wfile.write(content)
             except IOError:
                 self.send_error(404,'File Not Found: %s' % self.path)
+        else:
+            self.send_error(405, 'Only Images Are Accessible')
 
 class FileEventHandler(FileSystemEventHandler):
     def on_any_event(self, event):
@@ -86,11 +88,9 @@ class FileEventHandler(FileSystemEventHandler):
     def on_moved(self, event):
         if not(event.is_directory) and is_image(event.src_path):
             print("image renamed from {0} to {1}".format(event.src_path,event.dest_path))
-            images.remove(event.src_path)
-            images.append(event.dest_path)
+            images[images.index(event.src_path)] = event.dest_path
             if event.src_path in unvisited_images:
-                unvisited_images.remove(event.src_path)
-                unvisited_images.append(event.dest_path)
+                unvisited_images[unvisited_images.index(event.src_path)] = event.dest_path
             print(images, unvisited_images)
 
     def on_created(self, event):
@@ -118,7 +118,7 @@ def is_image(filePath):
         return False
 
 def scan_image():
-    dirs = os.scandir(r"./")
+    dirs = scandir(r"./")
     for file in dirs:
         if file.is_file():
             if is_image(file.path):
@@ -146,7 +146,7 @@ def start_web_server(ip, port):
     httpd.serve_forever()
 
 def main():
-    parser = argparse.ArgumentParser()
+    parser = ArgumentParser()
     parser.add_argument('--port', '-p', type=int,
                         help='server port number, default is {}'.format(PORT),
                         default=PORT)
@@ -155,10 +155,10 @@ def main():
                         default=IP)
     args = parser.parse_args()
     try:
-        ipaddress.ip_address(args.ip)
+        ip_address(args.ip)
     except ValueError:
         print("Error: incorrect IP: ", args.ip)
-        sys.exit(-1)
+        exit(-1)
 
     scan_image()
     watch_image()
@@ -166,6 +166,5 @@ def main():
 
 
 
- 
 if __name__ == '__main__':
     main()
