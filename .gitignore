@@ -1,5 +1,11 @@
 *.crx
 *.xpi
 *.zip
+*.exe
 dist/*
 build/*
+MyServer.spec
+__pycache__/*
+*.jpg
+*.png
+*.gif
