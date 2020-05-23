@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 #--coding:utf-8--
 
-# import time
-
 from sys import exit
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from ipaddress import ip_address
@@ -17,24 +15,17 @@ curdir = path.dirname(path.realpath(__file__))
 sep = '/'
 
 IP = "127.0.0.1" #accessible to only this device
-PORT = 8001
+PORT = 8000
 
 images = []
 unvisited_images = []
 
 # MIME-TYPE
 mimedic = [
-    # ('.html', 'text/html'),
-    # ('.htm', 'text/html'),
-    # ('.js', 'application/javascript'),
-    # ('.css', 'text/css'),
-    # ('.json', 'application/json'),
     ('.png', 'image/png'),
     ('.jpg', 'image/jpeg'),
     ('.jpeg', 'image/jpeg'),
-    ('.gif', 'image/gif'),
-    # ('.txt', 'text/plain'),
-    # ('.avi', 'video/x-msvideo'),
+    ('.gif', 'image/gif')
 ]
 
 
@@ -44,7 +35,6 @@ class myHTTPServer_RequestHandler(BaseHTTPRequestHandler):
         sendReply = False
         querypath = urlparse(self.path)
         filepath, query = querypath.path, querypath.query
-        # print(filepath)
         
         if filepath == '/randomPic':
             print(unvisited_images)
@@ -60,9 +50,7 @@ class myHTTPServer_RequestHandler(BaseHTTPRequestHandler):
                     unvisited_images.append(image)
                 print('after readd', unvisited_images)
 
-        # print('path', path)
         filename, fileext = path.splitext(filepath)
-        # print(filename, fileext)
         for e in mimedic:
             if e[0] == fileext:
                 mimetype = e[1]
@@ -131,11 +119,6 @@ def watch_image():
     event_handler = FileEventHandler()
     observer.schedule(event_handler, r"./", False)
     observer.start()
-    # try:
-    #     while True:
-    #         time.sleep(1)
-    # except KeyboardInterrupt:
-    #     observer.stop()
 
 def start_web_server(ip, port):
     print('starting server, port', port)
@@ -163,8 +146,6 @@ def main():
     scan_image()
     watch_image()
     start_web_server(args.ip, args.port)
-
-
 
 if __name__ == '__main__':
     main()
